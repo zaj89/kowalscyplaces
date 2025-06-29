@@ -25,18 +25,27 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
   <div class="container">
     <a class="navbar-brand" href="{% url 'index' %}">Kowalscy Lokalizacje</a>
-    <div class="collapse navbar-collapse">
+
+    <!-- Przycisk hamburger (toggler) -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Menu nawigacji -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Wyszukaj Punkt</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'add_location' %}">Dodaj Punkt</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'parking_map' %}">🅿️ Mapa parkingów</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'add_parking' %}">➕ Dodaj parking</a></li>
-
+        <li class="nav-item"><a class="nav-link" href="{% url 'parking_map' %}">🅿️ Mapa parkingów</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'add_parking' %}">➕ Dodaj parking</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'pdfparser_index' %}">PDF do Mapy</a></li>
 
       </ul>
     </div>
   </div>
 </nav>
+
 
 <div class="container">
     {% if messages %}

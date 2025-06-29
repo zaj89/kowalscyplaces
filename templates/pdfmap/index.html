@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Wczytaj plik PDF ze zleceniem</h2>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <input type="file" name="pdf" accept="application/pdf" required>
+  <button type="submit" class="btn btn-primary mt-2">Prześlij</button>
+</form>
+
+{% if error %}
+  <div class="alert alert-danger mt-3">{{ error }}</div>
+{% endif %}
+
+{% if addresses %}
+  <h3 class="mt-4">Adresy:</h3>
+  <ul>
+    {% for addr in addresses %}
+      <li>{{ addr }}</li>
+    {% endfor %}
+  </ul>
+
+  <h3>Link do Google Maps:</h3>
+  <a href="{{ link }}" target="_blank">{{ link }}</a>
+{% endif %}
+{% endblock %}
