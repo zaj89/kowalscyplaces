@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Mapa parkingów{% endblock %}
+
+{% block content %}
+<h2>Mapa parkingów</h2>
+
+
+
+<!-- Mapa Google -->
+<div id="map" style="height: 500px;"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function initMap() {
+    const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 5,
+        center: { lat: 52.7542, lng: 7.5776 },
+        mapTypeId: 'satellite'
+    });
+
+    const parkings = [
+      {% for parking in parkings %}
+        {
+          name: `{{ parking.name|escapejs }}`,
+          coords: `{{ parking.coords }}`,
+          description: `{{ parking.description|default:'Brak opisu'|escapejs }}`
+        },
+      {% endfor %}
+    ];
+
+    parkings.forEach(p => {
+        const [lat, lng] = p.coords.split(',').map(Number);
+        const marker = new google.maps.Marker({
+            position: { lat, lng },
+            map,
+            title: p.name || p.coords,
+            icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
+        });
+
+        const infowindow = new google.maps.InfoWindow({
+            content: `<strong>{{ parking.name|default:'Parking' }}</strong><br>
+            {{ parking.description|default:'Brak opisu' }}<br>
+            <a href='https://www.google.com/maps/dir/?api=1&destination={{ parking.coords|urlencode }}'
+               target='_blank' title='Nawiguj w Google Maps'>
+               <img src='https://maps.google.com/mapfiles/ms/icons/red-pushpin.png'
+                    alt='Nawiguj' style='width: 24px; vertical-align: middle; margin-top: 5px;'>
+            </a>`
+});
+
+        marker.addListener("click", () => {
+            infowindow.open(map, marker);
+        });
+    });
+}
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZXdCVyL_ulgQQPKxfKpo8qFWj4QMyeII&callback=initMap" async defer></script>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block title %}{{ location.name }} - szczegóły{% endblock %}
+
+{% block content %}
+<h2>{{ location.name }} ({{ location.town }})</h2>
+
+<div id="map" style="height: 400px;"></div>
+
+<!-- Legenda pod mapą -->
+<div class="mt-3" style="font-family: Arial, sans-serif;">
+  <strong>Legenda:</strong>
+  <ul class="list-unstyled">
+    <li><img src="http://maps.google.com/mapfiles/ms/icons/green-dot.png" style="vertical-align: middle;"> Wjazd (Główna brama)</li>
+    <li><img src="http://maps.google.com/mapfiles/ms/icons/blue-dot.png" style="vertical-align: middle;"> Biuro</li>
+    <li><img src="http://maps.google.com/mapfiles/ms/icons/yellow-dot.png" style="vertical-align: middle;"> Załadunek/Rozładunek</li>
+    <li><img src="http://maps.google.com/mapfiles/ms/icons/red-dot.png" style="vertical-align: middle;"> Parkingi</li>
+  </ul>
+</div>
+
+<!-- Szczegóły punktu -->
+<div class="mt-4" style="max-width: 600px; font-family: Arial, sans-serif;">
+  <h3>Szczegóły Punktu</h3>
+  <table class="table table-bordered table-striped">
+    <tbody>
+      <tr>
+        <td><strong>Nazwa:</strong></td>
+        <td>{{ location.name }}</td>
+      </tr>
+      <tr>
+        <td><strong>Miejscowość:</strong></td>
+        <td>{{ location.town }}</td>
+      </tr>
+      <tr>
+        <td><strong>Wjazd (współrzędne):</strong></td>
+        <td>
+          {{ location.entry_coords }}
+          <a href="https://www.google.com/maps/dir/?api=1&destination={{ location.entry_coords|urlencode }}" target="_blank">
+            <img src="http://maps.google.com/mapfiles/ms/icons/green-dot.png" alt="Nawiguj" style="width: 18px; vertical-align: middle; margin-left: 5px;">
+          </a>
+        </td>
+      </tr>
+
+      {% if location.office_coords %}
+      <tr>
+        <td><strong>Biuro (współrzędne):</strong></td>
+        <td>
+          {{ location.office_coords }}
+          <a href="https://www.google.com/maps/dir/?api=1&destination={{ location.office_coords|urlencode }}" target="_blank">
+            <img src="http://maps.google.com/mapfiles/ms/icons/blue-dot.png" alt="Nawiguj" style="width: 18px; vertical-align: middle; margin-left: 5px;">
+          </a>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Opis biura:</strong></td>
+        <td>{{ location.office_description|default:"Brak opisu" }}</td>
+      </tr>
+      {% endif %}
+
+      {% if location.loading_coords %}
+      <tr>
+        <td><strong>Załadunek/Rozładunek (współrzędne):</strong></td>
+        <td>
+          {{ location.loading_coords }}
+          <a href="https://www.google.com/maps/dir/?api=1&destination={{ location.loading_coords|urlencode }}" target="_blank">
+            <img src="http://maps.google.com/mapfiles/ms/icons/yellow-dot.png" alt="Nawiguj" style="width: 18px; vertical-align: middle; margin-left: 5px;">
+          </a>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Opis załadunku/rozładunku:</strong></td>
+        <td>{{ location.loading_description|default:"Brak opisu" }}</td>
+      </tr>
+      {% endif %}
+
+      {% for parking in parking_data %}
+<tr>
+  <td><strong>Parking {{ parking.number }} (współrzędne):</strong></td>
+  <td>
+    {{ parking.coords }}
+    <a href="https://www.google.com/maps/dir/?api=1&destination={{ parking.coords|urlencode }}" target="_blank">
+      <img src="http://maps.google.com/mapfiles/ms/icons/red-dot.png" alt="Nawiguj" style="width: 18px; vertical-align: middle; margin-left: 5px;">
+    </a>
+  </td>
+</tr>
+<tr>
+  <td><strong>Opis parkingu {{ parking.number }}:</strong></td>
+  <td>{{ parking.description|default:"Brak opisu" }}</td>
+</tr>
+{% endfor %}
+
+
+      <tr>
+        <td><strong>Rozładunek nocny:</strong></td>
+        <td>{{ location.night_unloading|yesno:"Tak,Nie" }}</td>
+      </tr>
+      <tr>
+        <td><strong>Opis rozładunku nocnego:</strong></td>
+        <td>{{ location.night_unloading_description|default:"Brak opisu" }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<br>
+<p>
+  <a href="https://www.google.com/maps/dir/?api=1&destination={{ location.entry_coords }}"
+     target="_blank"
+     style="display: inline-block; padding: 10px 20px; background-color: #4285F4; color: white; text-decoration: none; border-radius: 5px;">
+     🧝 Nawiguj w Google Maps
+  </a>
+</p>
+
+<br>
+<p><a href="{% url 'edit_location' location.id %}" class="btn btn-primary">Edytuj ten Punkt</a></p>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function initMap() {
+    const [lat, lng] = "{{ location.entry_coords }}".split(',').map(Number);
+    const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 14,
+        center: { lat: lat, lng: lng },
+        mapTypeId: 'satellite'
+    });
+
+    const coords = [
+        { title: 'Wjazd', position: "{{ location.entry_coords }}", description: 'Główna brama wjazdowa', icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' },
+        {% if location.office_coords %}
+        { title: 'Biuro', position: "{{ location.office_coords }}", description: "{{ location.office_description|default:'Brak opisu' }}", icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png' },
+        {% endif %}
+        {% if location.loading_coords %}
+        { title: 'Załadunek/Rozładunek', position: "{{ location.loading_coords }}", description: "{{ location.loading_description|default:'Brak opisu' }}", icon: 'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png' },
+        {% endif %}
+        {% if location.parking1_coords %}
+        { title: 'Parking 1', position: "{{ location.parking1_coords }}", description: "{{ location.parking1_description|default:'Brak opisu' }}", icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png' },
+        {% endif %}
+        {% if location.parking2_coords %}
+        { title: 'Parking 2', position: "{{ location.parking2_coords }}", description: "{{ location.parking2_description|default:'Brak opisu' }}", icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png' },
+        {% endif %}
+        {% if location.parking3_coords %}
+        { title: 'Parking 3', position: "{{ location.parking3_coords }}", description: "{{ location.parking3_description|default:'Brak opisu' }}", icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png' },
+        {% endif %}
+        {% if location.parking4_coords %}
+        { title: 'Parking 4', position: "{{ location.parking4_coords }}", description: "{{ location.parking4_description|default:'Brak opisu' }}", icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png' },
+        {% endif %}
+        {% if location.parking5_coords %}
+        { title: 'Parking 5', position: "{{ location.parking5_coords }}", description: "{{ location.parking5_description|default:'Brak opisu' }}", icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png' },
+        {% endif %}
+    ];
+
+    coords.forEach(({ title, position, description, icon }) => {
+        const [lat, lng] = position.split(',').map(Number);
+        const marker = new google.maps.Marker({
+            position: { lat, lng },
+            map,
+            title: title,
+            icon: icon
+        });
+
+        const infowindow = new google.maps.InfoWindow({
+            content: `<strong>${title}</strong><br>${description}`
+        });
+
+        marker.addListener("click", () => {
+            infowindow.open(map, marker);
+        });
+    });
+}
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZXdCVyL_ulgQQPKxfKpo8qFWj4QMyeII&callback=initMap" async defer></script>
+{% endblock %}

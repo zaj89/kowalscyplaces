@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Wyszukiwarka Punktów{% endblock %}
+
+{% block content %}
+<h2>Wyszukiwarka Punktów</h2>
+<input type="text" id="search" class="form-control mb-3" placeholder="Wpisz miejscowość...">
+<ul id="results" class="list-group"></ul>
+<p><a href="{% url 'add_location' %}" class="btn btn-primary mt-3">Dodaj nowy Punkt</a></p>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('search').addEventListener('input', function() {
+    const query = this.value;
+    if (query.length < 2) return;
+    fetch(`/search/?q=` + query)
+        .then(res => res.json())
+        .then(data => {
+            const list = document.getElementById('results');
+            list.innerHTML = '';
+            data.forEach(loc => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.innerHTML = `<a href='/locations/${loc.id}/'>${loc.name} (${loc.town})</a>`;
+                list.appendChild(li);
+            });
+        });
+});
+</script>
+{% endblock %}
