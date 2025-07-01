@@ -1,5 +1,5 @@
 from django import forms
-from .models import Location
+from .models import Location, Parking
 
 class LocationForm(forms.ModelForm):
     class Meta:
@@ -8,10 +8,13 @@ class LocationForm(forms.ModelForm):
             'name', 'town', 'entry_coords',
             'office_coords', 'office_description',
             'loading_coords', 'loading_description',
-            'parking1_coords', 'parking1_description',
-            'parking2_coords', 'parking2_description',
-            'parking3_coords', 'parking3_description',
-            'parking4_coords', 'parking4_description',
-            'parking5_coords', 'parking5_description',
             'night_unloading', 'night_unloading_description',
         ]
+
+class ParkingForm(forms.ModelForm):
+    class Meta:
+        model = Parking
+        fields = ['name', 'coords', 'description']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 2}),
+        }

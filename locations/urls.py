@@ -7,4 +7,6 @@ urlpatterns = [
     path('locations/add/', views.add_location, name='add_location'),
     path('locations/<int:location_id>/', views.location_detail, name='location_detail'),
     path('locations/<int:location_id>/edit/', views.edit_location, name='edit_location'),
+    path('mapa/', views.parking_map, name='parking_map'),
+    path('mapa/add/', views.add_parking, name='add_parking'),
 ]

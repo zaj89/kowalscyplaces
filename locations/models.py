@@ -17,45 +17,29 @@ class Location(models.Model):
         verbose_name = "Punkt"
         verbose_name_plural = "Punkty"
 
-    name = models.CharField(max_length=100, verbose_name='Nazwa')
-    town = models.CharField(max_length=100, verbose_name='Miejscowość')
-    entry_coords = models.CharField(max_length=50, verbose_name='Współrzędne bramy wjazdowej', validators=[validate_coordinates])
-    office_coords = models.CharField(max_length=50, blank=True, null=True, verbose_name='Współrzędne biura', validators=[validate_coordinates])
-    office_description = models.TextField(blank=True, null=True, verbose_name='Opis biura')
-    loading_coords = models.CharField(max_length=50, blank=True, null=True, verbose_name='Współrzędne załadunku/rozładunku', validators=[validate_coordinates])
-    loading_description = models.TextField(blank=True, null=True, verbose_name='Opis załadunku/rozładunku')
-    parking1_coords = models.CharField(max_length=50, blank=True, null=True, verbose_name='Współrzędne parkingu 1', validators=[validate_coordinates])
-    parking1_description = models.TextField(blank=True, null=True, verbose_name='Opis parkingu 1')
-    parking2_coords = models.CharField(max_length=50, blank=True, null=True, verbose_name='Współrzędne parkingu 2', validators=[validate_coordinates])
-    parking2_description = models.TextField(blank=True, null=True, verbose_name='Opis parkingu 2')
-    parking3_coords = models.CharField(max_length=50, blank=True, null=True, verbose_name='Współrzędne parkingu 3', validators=[validate_coordinates])
-    parking3_description = models.TextField(blank=True, null=True, verbose_name='Opis parkingu 3')
-    parking4_coords = models.CharField(max_length=50, blank=True, null=True, verbose_name='Współrzędne parkingu 4', validators=[validate_coordinates])
-    parking4_description = models.TextField(blank=True, null=True, verbose_name='Opis parkingu 4')
-    parking5_coords = models.CharField(max_length=50, blank=True, null=True, verbose_name='Współrzędne parkingu 5', validators=[validate_coordinates])
-    parking5_description = models.TextField(blank=True, null=True, verbose_name='Opis parkingu 5')
-    night_unloading = models.BooleanField(default=False, verbose_name='Rozładunek nocny')
-    night_unloading_description = models.TextField(blank=True, null=True, verbose_name='Opis rozładunku nocnego')
-
+    name = models.CharField(max_length=255)
+    town = models.CharField(max_length=255)
+    entry_coords = models.CharField(max_length=100)
+    office_coords = models.CharField(max_length=100, blank=True, null=True)
+    office_description = models.TextField(blank=True, null=True)
+    loading_coords = models.CharField(max_length=100, blank=True, null=True)
+    loading_description = models.TextField(blank=True, null=True)
+    night_unloading = models.BooleanField(default=False)
+    night_unloading_description = models.TextField(blank=True, null=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    def save(self, *args, **kwargs):
-        self.entry_coords = round_coords(self.entry_coords)
-        if self.office_coords:
-            self.office_coords = round_coords(self.office_coords)
-        if self.loading_coords:
-            self.loading_coords = round_coords(self.loading_coords)
-        if self.parking1_coords:
-            self.parking1_coords = round_coords(self.parking1_coords)
-        if self.parking2_coords:
-            self.parking2_coords = round_coords(self.parking2_coords)
-        if self.parking3_coords:
-            self.parking3_coords = round_coords(self.parking3_coords)
-        if self.parking4_coords:
-            self.parking4_coords = round_coords(self.parking4_coords)
-        if self.parking5_coords:
-            self.parking5_coords = round_coords(self.parking5_coords)
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.town})"
+
+class Parking(models.Model):
+    name = models.CharField(max_length=100, blank=True, null=True, verbose_name="Nazwa")
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True, blank=True, related_name="parkings")
+    coords = models.CharField(max_length=100, verbose_name="Współrzędne", validators=[validate_coordinates])
+    description = models.TextField(blank=True, null=True, verbose_name="Opis")
+
+    def __str__(self):
+        return f"Parking ({self.coords}) przy {self.location.name}"
+
+    def save(self, *args, **kwargs):
+        self.coords = round_coords(self.coords)
+        super().save(*args, **kwargs)

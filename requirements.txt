@@ -1,2 +1,4 @@
 Django<5.0
 gunicorn
+pdfplumber
+psycopg2-binary

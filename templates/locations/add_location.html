@@ -1,23 +1,126 @@
 {% extends 'base.html' %}
 {% block title %}Dodaj Punkt{% endblock %}
 {% block content %}
-<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h2 style="font-size: 24px; margin-bottom: 20px;">➕ Dodaj Punkt</h2>
-  <form method="post" style="display: flex; flex-direction: column; gap: 16px;">
+<div style="max-width: 700px; margin: 0 auto; padding: 20px;">
+  <h2>➕ Dodaj Punkt z Parkingami</h2>
+  <form method="post" id="locationForm" style="display: flex; flex-direction: column; gap: 16px;">
       {% csrf_token %}
       {{ form.non_field_errors }}
       {% for field in form %}
         <div>
-          <label style="font-weight: bold;">{{ field.label }}</label><br>
+          <label><strong>{{ field.label }}</strong></label><br>
           {{ field }}
           {% if field.errors %}
             <div style="color: red;">{{ field.errors|striptags }}</div>
           {% endif %}
         </div>
       {% endfor %}
-      <button type="submit" style="background-color: #4CAF50; color: white; padding: 10px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;">
+
+      <h3>Parkingi</h3>
+      {{ formset.management_form }}
+
+      <div id="parkingFormsContainer" style="display: flex; flex-direction: column; gap: 12px;">
+          {% for parking_form in formset %}
+          <div class="parking-form" style="border: 1px solid #ccc; padding: 10px; border-radius: 6px; position: relative;">
+              {% for field in parking_form.visible_fields %}
+                <div>
+                  <label><strong>{{ field.label }}</strong></label><br>
+                  {{ field }}
+                  {% if field.errors %}
+                    <div style="color: red;">{{ field.errors|striptags }}</div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+              <button type="button" class="removeParkingBtn" style="position: absolute; top: 6px; right: 6px; background: none; border: none; font-size: 20px; cursor: pointer;" title="Usuń parking">✖</button>
+          </div>
+          {% endfor %}
+      </div>
+
+      <button type="button" id="addParkingBtn" style="margin-top: 10px; padding: 8px 12px; font-size: 16px;">➕ Dodaj parking</button>
+
+      <button type="submit" style="margin-top: 20px; background-color: #4CAF50; color: white; padding: 12px; border: none; border-radius: 6px; font-size: 18px; cursor: pointer;">
         Zapisz
       </button>
   </form>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const addBtn = document.getElementById("addParkingBtn");
+    const container = document.getElementById("parkingFormsContainer");
+    const totalForms = document.getElementById("id_parking_set-TOTAL_FORMS") || document.getElementById("id_parking_set-TOTAL_FORMS") || document.querySelector('[name$="TOTAL_FORMS"]');
+
+    // Funkcja do usuwania formularza parkingu i aktualizacji management form
+    function removeParkingForm(button) {
+        const parkingForm = button.closest('.parking-form');
+        parkingForm.remove();
+        updateFormIndices();
+    }
+
+    // Aktualizuje indeksy (name i id) formularzy parkingu oraz TOTAL_FORMS
+    function updateFormIndices() {
+        const forms = container.querySelectorAll('.parking-form');
+        totalForms.value = forms.length;
+        forms.forEach((formDiv, index) => {
+            formDiv.querySelectorAll('input, textarea, select').forEach(input => {
+                if (input.name) {
+                    input.name = input.name.replace(/-\d+-/, `-${index}-`);
+                }
+                if (input.id) {
+                    input.id = input.id.replace(/-\d+-/, `-${index}-`);
+                }
+            });
+        });
+    }
+
+    // Obsługa kliknięcia dodaj parking
+    addBtn.addEventListener('click', () => {
+        const currentCount = parseInt(totalForms.value);
+        // Pobierz pierwszy formularz jako wzór (lub utwórz nowy pusty formularz)
+        const firstForm = container.querySelector('.parking-form');
+        if (!firstForm) {
+            // Nie ma formularza — utwórz prosty pusty (hardcode minimalny html)
+            const newDiv = document.createElement('div');
+            newDiv.classList.add('parking-form');
+            newDiv.style = "border: 1px solid #ccc; padding: 10px; border-radius: 6px; position: relative;";
+            newDiv.innerHTML = `
+                <div>
+                    <label for="id_parking_set-${currentCount}-name"><strong>Nazwa</strong></label><br>
+                    <input type="text" name="parking_set-${currentCount}-name" id="id_parking_set-${currentCount}-name">
+                </div>
+                <div>
+                    <label for="id_parking_set-${currentCount}-coords"><strong>Współrzędne</strong></label><br>
+                    <input type="text" name="parking_set-${currentCount}-coords" id="id_parking_set-${currentCount}-coords">
+                </div>
+                <div>
+                    <label for="id_parking_set-${currentCount}-description"><strong>Opis</strong></label><br>
+                    <textarea name="parking_set-${currentCount}-description" id="id_parking_set-${currentCount}-description" rows="2"></textarea>
+                </div>
+                <button type="button" class="removeParkingBtn" style="position: absolute; top: 6px; right: 6px; background: none; border: none; font-size: 20px; cursor: pointer;" title="Usuń parking">✖</button>
+            `;
+            container.appendChild(newDiv);
+        } else {
+            const newForm = firstForm.cloneNode(true);
+            // wyczyść wartości
+            newForm.querySelectorAll('input, textarea').forEach(input => {
+                if (input.type === 'checkbox' || input.type === 'radio') input.checked = false;
+                else input.value = '';
+            });
+            // dodaj do kontenera
+            container.appendChild(newForm);
+        }
+        updateFormIndices();
+        attachRemoveHandlers();
+    });
+
+    // Przypisz obsługę usuwania do wszystkich aktualnych przycisków
+    function attachRemoveHandlers() {
+        container.querySelectorAll('.removeParkingBtn').forEach(btn => {
+            btn.onclick = () => removeParkingForm(btn);
+        });
+    }
+
+    attachRemoveHandlers();
+});
+</script>
 {% endblock %}

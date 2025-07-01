@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from .models import Location
-from .forms import LocationForm
+from .models import Location, Parking
+from .forms import LocationForm, ParkingForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.contrib import messages
+from django.forms import inlineformset_factory
 
 @login_required
 def index(request):
@@ -36,35 +37,65 @@ def location_detail(request, location_id):
         'parking_data': parking_data
     })
 
+ParkingFormSet = inlineformset_factory(Location, Parking, form=ParkingForm, extra=0, can_delete=True)
 
 @login_required
 def add_location(request):
     if request.method == 'POST':
         form = LocationForm(request.POST)
-        if form.is_valid():
+        formset = ParkingFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
             location = form.save(commit=False)
             location.created_by = request.user
             location.save()
-            messages.success(request, "Parking został dodany pomyślnie.")
+            formset.instance = location
+            formset.save()
+            messages.success(request, "Punkt i parkingi zostały dodane.")
             return redirect('index')
         else:
-            messages.error(request, "Wystąpił błąd podczas dodawania parkingu.")
-
+            messages.error(request, "Błąd w formularzu punktu lub parkingów.")
     else:
         form = LocationForm()
-    return render(request, 'locations/add_location.html', {'form': form})
+        formset = ParkingFormSet()
+
+    return render(request, 'locations/add_location.html', {'form': form, 'formset': formset})
 
 @login_required
 def edit_location(request, location_id):
     location = get_object_or_404(Location, id=location_id)
     if request.method == 'POST':
         form = LocationForm(request.POST, instance=location)
-        if form.is_valid():
+        formset = ParkingFormSet(request.POST, instance=location)
+        if form.is_valid() and formset.is_valid():
             form.save()
-            messages.success(request, "Punkt został zaktualizowany.")
+            formset.save()
+            messages.success(request, "Punkt i parkingi zostały zaktualizowane.")
             return redirect('location_detail', location_id=location.id)
         else:
-            messages.error(request, "Formularz zawiera błędy.")
+            messages.error(request, "Błąd w formularzu punktu lub parkingów.")
     else:
         form = LocationForm(instance=location)
-    return render(request, 'locations/edit_location.html', {'form': form, 'location': location})
+        formset = ParkingFormSet(instance=location)
+
+    return render(request, 'locations/edit_location.html', {'form': form, 'formset': formset, 'location': location})
+
+
+def parking_map(request):
+    parkings = Parking.objects.all()
+    form = ParkingForm()
+    return render(request, 'parkings/parking_map.html', {'parkings': parkings, 'form': form})
+
+@login_required
+def add_parking(request):
+    if request.method == 'POST':
+        form = ParkingForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Parking został dodany.")
+            return redirect('parking_map')
+        else:
+            messages.error(request, "Wystąpił błąd podczas dodawania parkingu.")
+    else:
+        form = ParkingForm()
+
+    return render(request, 'parkings/add_parking.html', {'form': form})

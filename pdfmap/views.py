@@ -68,5 +68,9 @@ def index(request):
 
         addresses = extract_addresses_from_pdf(file_path)
         link = generate_google_maps_link(addresses)
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            print(f"Błąd przy usuwaniu pliku: {e}")
         return render(request, "pdfmap/index.html", {"addresses": addresses, "link": link})
     return render(request, "pdfmap/index.html")
