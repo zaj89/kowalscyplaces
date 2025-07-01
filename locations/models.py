@@ -38,7 +38,7 @@ class Parking(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name="Opis")
 
     def __str__(self):
-        return f"Parking ({self.coords}) przy {self.location.name}"
+        return f"Parking ({self.coords})"
 
     def save(self, *args, **kwargs):
         self.coords = round_coords(self.coords)

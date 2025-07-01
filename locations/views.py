@@ -20,45 +20,47 @@ def search_locations(request):
 @login_required
 def location_detail(request, location_id):
     location = get_object_or_404(Location, id=location_id)
-
-    parking_data = []
-    for i in range(1, 6):
-        coord = getattr(location, f'parking{i}_coords', None)
-        description = getattr(location, f'parking{i}_description', '')
-        if coord:
-            parking_data.append({
-                'number': i,
-                'coords': coord,
-                'description': description,
-            })
-
+    parking_data = location.parkings.all()  # zakładam, że relacja reverse ForeignKey z Parking do Location to "parkings"
     return render(request, 'locations/detail.html', {
         'location': location,
-        'parking_data': parking_data
+        'parking_data': parking_data,
     })
+
 
 ParkingFormSet = inlineformset_factory(Location, Parking, form=ParkingForm, extra=0, can_delete=True)
 
 @login_required
 def add_location(request):
+    ParkingFormSet = inlineformset_factory(Location, Parking, form=ParkingForm, extra=1, can_delete=True)
+
     if request.method == 'POST':
         form = LocationForm(request.POST)
-        formset = ParkingFormSet(request.POST)
-        if form.is_valid() and formset.is_valid():
+        formset = ParkingFormSet(request.POST, instance=None, prefix='parking_set')
+
+        if form.is_valid():
             location = form.save(commit=False)
             location.created_by = request.user
             location.save()
-            formset.instance = location
-            formset.save()
-            messages.success(request, "Punkt i parkingi zostały dodane.")
-            return redirect('index')
+
+            formset = ParkingFormSet(request.POST, instance=location, prefix='parking_set')
+
+            if formset.is_valid():
+                formset.save()
+                messages.success(request, "Punkt i parkingi zostały dodane.")
+                return redirect('index')
+            else:
+                messages.error(request, "Błąd w formularzu parkingów.")
         else:
-            messages.error(request, "Błąd w formularzu punktu lub parkingów.")
+            messages.error(request, "Błąd w formularzu punktu.")
+
     else:
         form = LocationForm()
-        formset = ParkingFormSet()
+        formset = ParkingFormSet(prefix='parking_set', queryset=Parking.objects.none())
 
     return render(request, 'locations/add_location.html', {'form': form, 'formset': formset})
+
+
+
 
 @login_required
 def edit_location(request, location_id):
@@ -99,3 +101,4 @@ def add_parking(request):
         form = ParkingForm()
 
     return render(request, 'parkings/add_parking.html', {'form': form})
+
