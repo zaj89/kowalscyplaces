@@ -39,14 +39,15 @@ function initMap() {
         });
 
         const infowindow = new google.maps.InfoWindow({
-            content: `<strong>{{ parking.name|default:'Parking' }}</strong><br>
-            {{ parking.description|default:'Brak opisu' }}<br>
-            <a href='https://www.google.com/maps/dir/?api=1&destination={{ parking.coords|urlencode }}'
-               target='_blank' title='Nawiguj w Google Maps'>
-               <img src='https://maps.google.com/mapfiles/ms/icons/red-pushpin.png'
-                    alt='Nawiguj' style='width: 24px; vertical-align: middle; margin-top: 5px;'>
-            </a>`
-});
+            content: `
+                <strong>${p.name}</strong><br>
+                ${p.description}<br>
+                <a href='https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.coords)}'
+                   target='_blank' title='Nawiguj w Google Maps'>
+                   <img src='https://maps.google.com/mapfiles/ms/icons/red-pushpin.png'
+                        alt='Nawiguj' style='width: 24px; vertical-align: middle; margin-top: 5px;'>
+                </a>`
+        });
 
         marker.addListener("click", () => {
             infowindow.open(map, marker);
@@ -54,6 +55,7 @@ function initMap() {
     });
 }
 </script>
+
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZXdCVyL_ulgQQPKxfKpo8qFWj4QMyeII&callback=initMap" async defer></script>
 {% endblock %}
